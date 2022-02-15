@@ -12,13 +12,14 @@
         <input type="text" id="input_quantidade">
         <button onclick="update(event)" type="submit">Atualizar</button>
     </form>
+    <button onclick="predict_discharge(charts.percentage.data.datasets[0].data)">Prever horário de parada</button>
 </body>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const randomNum = () => Math.floor(Math.random() * (235 - 52 + 1) + 52);
     const randomRGB = () => `rgb(${randomNum()}, ${randomNum()}, ${randomNum()})`;
 
-    const variables = ['temperature', 'percentage', 'current', 'balance']
+    const variables = ['percentage', 'balance', 'temperature',  'current']
     let charts = {}
     for(let variable of variables){
         let data = {
@@ -45,6 +46,24 @@
             canvas, 
             config
         )
+    }
+
+    function predict_discharge(data){
+        let data_copy = data.slice()
+        let sum = 0;
+        let n_intervals = 0;
+        for (var i = data_copy.length - 1; i >= 1; i--) {
+            if(data_copy[i] > data_copy[i - 1])
+                break;
+            sum += data_copy[i] - data_copy[i - 1]
+            n_intervals += 1;
+        }
+        let discharge_per_interval = -sum / n_intervals;
+        let remaining = data.at(-1) - 40
+        let time = remaining / discharge_per_interval * 5
+        let now = new Date()
+        let prediction = new Date(now.getTime() + time * 60000)
+        alert("O dispositivo atingirá 40% de bateria as " + prediction.toLocaleTimeString())
     }
 
     async function update(event=null){

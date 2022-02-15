@@ -9,4 +9,63 @@
 <body>
     
 </body>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const randomNum = () => Math.floor(Math.random() * (235 - 52 + 1) + 52);
+    const randomRGB = () => `rgb(${randomNum()}, ${randomNum()}, ${randomNum()})`;
+
+    const variables = ['temperature', 'percentage', 'current', 'balance']
+    let charts = {}
+    for(let variable of variables){
+        let data = {
+            labels: [],
+            datasets: [
+                {
+                    label: variable,
+                    borderColor: randomRGB(),
+                    data: []
+                }
+            ]
+        }
+
+        let canvas = document.createElement('canvas');
+        document.body.appendChild(canvas);
+
+        const config = {
+            type: 'line',
+            data: data,
+            options: {}
+        }
+
+        charts[variable] = new Chart(
+            canvas, 
+            config
+        )
+    }
+
+    async function update(){
+        let resp = await fetch('http://localhost:3000/api')
+        resp = await resp.json()
+        
+        for(let label of variables){
+            charts[label].data.labels = Array.from(resp, (reading) => {
+                let d = new Date(reading.datetime).toLocaleString()
+                return d;
+            })
+            if(label === 'balance'){
+                let bal = Array.from(resp, reading => reading[label])
+                for (var i = bal.length - 1; i >= 1; i--) {
+                    bal[i] -= bal[i - 1]
+                }
+                bal[0] = 0;
+                charts[label].data.datasets.find(dataset => dataset.label === label).data = bal
+            } else {
+                charts[label].data.datasets.find(dataset => dataset.label === label).data = Array.from(resp, reading => reading[label])
+            }
+            charts[label].update()
+        }
+    }
+    update()
+    setInterval(update, 5000)
+</script>
 </html>

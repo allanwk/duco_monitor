@@ -13,10 +13,13 @@ module.exports = function (app) {
             }
         })
         .get(async function(req, res){
-            let { number } = req.body;
-            if(!number)
-                number = 0;
-            let readings = await Reading.find({}, {_id: false, __v: false}).sort({datetime:1}).limit(number)
+            let readings = await Reading.find({}, {_id: false, __v: false}).sort({datetime:-1})
+            return res.json(readings)
+        })
+    app.route('/api/:limit')
+        .get(async function(req, res){
+            const { limit } = req.params;
+            let readings = await Reading.find({}, {_id: false, __v: false}).sort({datetime:-1}).limit(limit)
             return res.json(readings)
         })
 }

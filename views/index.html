@@ -7,7 +7,11 @@
     <title>Document</title>
 </head>
 <body>
-    
+    <form>
+        <label for="input_quantidade">Quantidade de leituras para carregar: </label>
+        <input type="text" id="input_quantidade">
+        <button onclick="update(event)" type="submit">Atualizar</button>
+    </form>
 </body>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -43,29 +47,34 @@
         )
     }
 
-    async function update(){
-        let resp = await fetch('http://localhost:3000/api')
+    async function update(event=null){
+        if(event){
+            event.preventDefault()
+        }
+        let number_readings = document.getElementById('input_quantidade').value
+        let resp = await fetch('/api/' + number_readings)
+           
         resp = await resp.json()
         
         for(let label of variables){
             charts[label].data.labels = Array.from(resp, (reading) => {
                 let d = new Date(reading.datetime).toLocaleString()
                 return d;
-            })
+            }).reverse()
             if(label === 'balance'){
-                let bal = Array.from(resp, reading => reading[label])
+                let bal = Array.from(resp, reading => reading[label]).reverse()
                 for (var i = bal.length - 1; i >= 1; i--) {
                     bal[i] -= bal[i - 1]
                 }
                 bal[0] = 0;
                 charts[label].data.datasets.find(dataset => dataset.label === label).data = bal
             } else {
-                charts[label].data.datasets.find(dataset => dataset.label === label).data = Array.from(resp, reading => reading[label])
+                charts[label].data.datasets.find(dataset => dataset.label === label).data = Array.from(resp, reading => reading[label]).reverse()
             }
             charts[label].update()
         }
     }
     update()
-    setInterval(update, 5000)
+    setInterval(update, 60000)
 </script>
 </html>

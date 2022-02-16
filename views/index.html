@@ -66,6 +66,19 @@
         alert("O dispositivo atingirá 40% de bateria as " + prediction.toLocaleTimeString())
     }
 
+    function rolling_average(data, periods){
+        let rolling = [];
+        for(let i = periods - 1; i < data.length; i++){
+            const window = data.slice(i - periods + 1, i + 1)
+            const sum = window.reduce((a,b) => a + b, 0)
+            const mean = sum / periods;
+            rolling.push(mean);
+        }
+        while(rolling.length < data.length)
+            rolling.unshift(0)
+        return rolling;
+    }
+
     async function update(event=null){
         if(event){
             event.preventDefault()
@@ -92,6 +105,17 @@
             }
             charts[label].update()
         }
+        const n_periods = 6;
+        let bal = charts['balance'].data.datasets[0].data;
+        let rolling = rolling_average(bal, n_periods);
+        if(!charts['balance'].data.datasets.find((dataset) => dataset.label === `${n_periods}MA`))
+            charts['balance'].data.datasets['1'] = {
+                label: `${n_periods}MA`,
+                data: [],
+                borderColor: randomRGB()
+            }
+        charts['balance'].data.datasets[1].data = rolling;
+        charts['balance'].update()
     }
     update()
     setInterval(update, 60000)
